@@ -1,49 +1,66 @@
-import React, { useEffect } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import Textbox from "../components/Textbox";
 import Button from "../components/Button";
-import { useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
+import axios from "axios";
+import { setCredentials } from "../redux/slices/authSlice"; 
 
 const Login = () => {
-  const { user } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm();
 
-  const navigate = useNavigate();
-
   const submitHandler = async (data) => {
-    console.log("submit");
+    try {
+      const jsonData = JSON.stringify(data);
+      console.log(jsonData);
+      const response = await axios.post("http://localhost:8800/login", jsonData, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.data) {
+        console.log("ok");
+        console.log(response.data)
+        dispatch(setCredentials(response.data.username));
+        navigate("/dashboard");  
+      } else {
+        console.error(response);
+      }
+    } catch (error) {
+      console.error("Login error:", error.response.data);
+    }
   };
 
-  useEffect(() => {
-    user && navigate("/dashboard");
-  }, [user]);
-
+  
   return (
     <div className='w-full min-h-screen flex items-center justify-center flex-col lg:flex-row bg-[#f3f4f6]'>
       <div className='w-full md:w-auto flex gap-0 md:gap-40 flex-col md:flex-row items-center justify-center'>
-        {/* left side */}
+        {/* Left side */}
         <div className='h-full w-full lg:w-2/3 flex flex-col items-center justify-center'>
           <div className='w-full md:max-w-lg 2xl:max-w-3xl flex flex-col items-center justify-center gap-5 md:gap-y-10 2xl:-mt-20'>
-            <span className='flex gap-1 py-1 px-3 border rounded-full text-sm md:text-base bordergray-300 text-gray-600'>
-              Manage all your task in one place!
+            <span className='flex gap-1 py-1 px-3 border rounded-full text-sm md:text-base border-gray-300 text-gray-600'>
+              Manage all your tasks in one place!
             </span>
             <p className='flex flex-col gap-0 md:gap-4 text-4xl md:text-6xl 2xl:text-7xl font-black text-center text-blue-700'>
-              <span>Cloud-Based</span>
+              <span>2Do</span>
               <span>Task Manager</span>
             </p>
-
             <div className='cell'>
               <div className='circle rotate-in-up-left'></div>
             </div>
           </div>
         </div>
 
-        {/* right side */}
+        {/* Right side */}
         <div className='w-full md:w-1/3 p-4 md:p-1 flex flex-col justify-center items-center'>
           <form
             onSubmit={handleSubmit(submitHandler)}
@@ -54,7 +71,10 @@ const Login = () => {
                 Welcome back!
               </p>
               <p className='text-center text-base text-gray-700 '>
-                Keep all your credential safge.
+                Keep all your credentials safe.
+              </p>
+              <p className='text-center text-base text-gray-700'>
+                Don't have an account? <Link to="/signup">Sign up!</Link>
               </p>
             </div>
 
@@ -71,7 +91,7 @@ const Login = () => {
                 error={errors.email ? errors.email.message : ""}
               />
               <Textbox
-                placeholder='your password'
+                placeholder='Your password'
                 type='password'
                 name='password'
                 label='Password'
@@ -83,7 +103,7 @@ const Login = () => {
               />
 
               <span className='text-sm text-gray-500 hover:text-blue-600 hover:underline cursor-pointer'>
-                Forget Password?
+                Forgot Password?
               </span>
 
               <Button
